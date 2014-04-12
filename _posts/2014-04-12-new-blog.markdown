@@ -1,0 +1,10 @@
+---
+layout: post
+title:  "Moving to Jekyll"
+date:   2014-04-12 15:51:27
+categories: jekyll update
+---
+
+Ah, yet another blog. At least I've moved away from WordPress. WP is too heavy for my tastes. 
+
+I had thought about building something similar to Jekyll months ago; pretty glad it exists.
