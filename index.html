@@ -1,13 +1,19 @@
----
-layout: default
-title: Nathan Scott
----
-
-<div id="home">
-  <h1>Blog Posts</h1>
-  <ul class="posts">
-    {% for post in site.posts %}
-      <li><span>{{ post.date | date_to_string }}</span> &raquo; <a href="{{ post.url }}">{{ post.title }}</a></li>
-    {% endfor %}
-  </ul>
-</div>
+<html>
+  <head>
+    <title>nscott</title>
+    <style>
+      *, html {
+        font-family: Arial, Helvetica, sans-serif;
+        font-size: 24pt;
+        margin: 20 auto;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>nscott's tools</h1>
+    <ul>
+      <li>(Work in Progress) <a href='./lost_ark/currency_converter.html'>Lost Ark Currency Converter</a></li>
+    </ul>
+  </body>
+</html>

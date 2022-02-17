@@ -1,0 +1,306 @@
+<html>
+<head>
+	<title>Lost Ark Currency Converter</title>
+	<link rel="icon" href="./images/royal.jpg" type="image/x-icon">
+	<style>
+		*, html {
+			font-family: Helvetica, Arial, Verdana;
+			font-size: 14pt;
+			margin: 10 auto;
+			text-align:  center;
+			background-color: #131719;
+			color: #D4D7DD;
+		}
+
+		input {
+			width: 100px;
+		}
+
+		img.currency {
+			float: right;
+			width: 25px;
+		}
+
+		table.currency_rates tr td:nth-child(5) {
+			max-width: 400px;
+			text-align: left;
+			font-size: 10pt;
+		}
+
+		table.output tr td:nth-child(5) {
+			max-width: 400px;
+			text-align: left;
+			font-size: 10pt;
+		}
+
+		li {
+			font-size: 10pt;
+		}
+
+		td {
+			border-bottom: 1px solid white;
+			padding: 5px 5px 5px 5px;
+		}
+	</style>
+	<script>
+		window.onload = (event) => {
+			compute_output_table();
+			const watchList = ['royal_blue_blue', 'royal_blue_royal', 'usd_royal_usd', 'usd_royal_royal', 'royal_gold_royal', 
+			'royal_gold_gold', 'gold_blue_gold', 'gold_blue_blue', 'royal_to_gold_to_blue', 'blue_to_usd', 'gold_to_usd', 
+			'onetomany_currency', 'onetomany_amt'];
+			for(let i = 0; i < watchList.length; i++) {
+				const ele = document.getElementById(watchList[i]);
+				ele.onchange = (event) => {
+					compute_output_table();
+				}
+			}
+		};
+
+		// https://stackoverflow.com/questions/11832914/how-to-round-to-at-most-2-decimal-places-if-necessary
+		function round(value, minimumFractionDigits, maximumFractionDigits) {
+			const formattedValue = value.toLocaleString('en', {
+				useGrouping: false,
+				minimumFractionDigits,
+				maximumFractionDigits
+			})
+			return Number(formattedValue)
+		}
+
+		function get_input(input, output) {
+			return (document.getElementById(`${input}_${output}_${input}`).value)*1.0
+		}
+
+		function get_output(input, output) {
+			console.log(output);
+			return (document.getElementById(`${input}_${output}_${output}`).value)*1.0
+		}
+
+		function compute_output_table() {
+			const usd_to_royal = get_input('usd', 'royal') / get_output('usd', 'royal');
+			const royal_to_gold = get_input('royal', 'gold') / get_output('royal', 'gold');
+
+			// This assumes the 5% transaction fee on blues is built-in
+			const gold_to_blue = get_input('gold', 'blue') / get_output('gold', 'blue');
+			const blue_to_gold = get_output('gold', 'blue') / get_input('gold', 'blue');
+
+			const royal_to_blue = get_input('royal', 'blue') / get_output('royal', 'blue');
+			const blue_to_royal = get_output('royal', 'blue') / get_input('royal', 'blue');
+
+
+			const usd_to_gold = usd_to_royal * royal_to_gold;
+			const usd_to_blue = usd_to_royal * royal_to_blue;
+
+			const gold_to_usd = usd_to_royal* royal_to_blue * blue_to_gold;
+
+
+			// outputs
+
+			// 1-to-many
+			const input_currency = document.getElementById('onetomany_currency').value;
+			const input_amt = document.getElementById('onetomany_amt').value * 1.0;
+			const one_to_many_out_elements = {
+				'gold': document.getElementById('onetomany_gold'),
+				'usd': document.getElementById('onetomany_usd'),
+				'blue': document.getElementById('onetomany_blue'),
+				'royal': document.getElementById('onetomany_royal')
+			};
+
+			const one_to_many_vals = {
+				'gold': 0,
+				'usd': 0,
+				'blue': 0,
+				'royal': 0
+			};
+
+			if (input_currency === 'usd') {
+				one_to_many_vals['usd'] = input_amt;
+				one_to_many_vals['gold'] = input_amt / usd_to_gold;
+				one_to_many_vals['blue'] = input_amt / usd_to_blue;
+				one_to_many_vals['royal'] = input_amt / usd_to_royal;
+			} else if (input_currency === 'gold') {
+				one_to_many_vals['gold'] = input_amt;
+				one_to_many_vals['usd'] = input_amt * usd_to_gold;
+				one_to_many_vals['blue'] = input_amt / gold_to_blue;
+				one_to_many_vals['royal'] = input_amt * royal_to_gold;
+			} else if (input_currency === 'blue') {
+				one_to_many_vals['blue'] = input_amt;
+				one_to_many_vals['usd'] = usd_to_blue * input_amt;
+				one_to_many_vals['gold'] = input_amt / blue_to_gold;
+				one_to_many_vals['royal'] = input_amt * royal_to_blue;
+			} else if (input_currency === 'royal') {
+				one_to_many_vals['royal'] = input_amt;
+				one_to_many_vals['usd'] = input_amt * usd_to_royal;
+				one_to_many_vals['gold'] = input_amt / royal_to_gold;
+				one_to_many_vals['blue'] = input_amt * blue_to_royal;
+			}
+
+			const one_to_many_keys = Object.keys(one_to_many_out_elements);
+			for(let i = 0; i < one_to_many_keys.length; i++) {
+				const key = one_to_many_keys[i];
+				one_to_many_out_elements[key].innerHTML = round(one_to_many_vals[key], 2, 2);
+			}
+
+			// Table
+			const royal_to_gold_to_blue_amt = document.getElementById('royal_to_gold_to_blue').value * 1.0;
+			const royal_to_gold_to_blue_out = royal_to_gold_to_blue_amt / royal_to_gold / gold_to_blue;
+			document.getElementById('royal_to_gold_to_blue_computed').innerHTML = round(royal_to_gold_to_blue_out, 2, 2);
+
+
+			const blue_to_usd_amt = document.getElementById('blue_to_usd').value * 1.0;
+			const blue_to_usd_out = usd_to_royal * royal_to_blue * blue_to_usd_amt;
+			document.getElementById('blue_to_usd_computed').innerHTML = round(blue_to_usd_out, 2, 2);
+
+			const gold_to_usd_amt = document.getElementById('gold_to_usd').value * 1.0;
+			const gold_to_usd_out = usd_to_gold * gold_to_usd_amt;
+			document.getElementById('gold_to_usd_computed').innerHTML = round(gold_to_usd_out, 2, 2);
+
+
+		}
+	</script>
+</head>
+<body>
+	<h1>Currency Converter</h1>
+	<div>
+		<h2>Inputs</h2>
+		Fill these out based on current game data.
+		<table class="currency_rates">
+			<thead>
+				<tr>
+					<th>Input Currency</th>
+					<th>Amount</th>
+					<th>Output Currency</th>
+					<th>Amount</th>
+					<th>Info</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td><img src="images/blue.jpg" class="currency"/> Blue Crystals</td>
+					<td><input type="text" id="royal_blue_blue" value="100"></td>
+					<td><img src="images/royal.jpg" class="currency"/> Royal Crystals</td>
+					<td><input type="text" id="royal_blue_royal" value="238"></td>
+					<td>
+						The royal crystal to blue crystal rate appears to be set by Smilegate.
+						Under the description at the currency vendor, it states "Crystals are traded by the hundred with a set rate of 100 crystals = 238 royal crystals"
+					</td>
+				</tr>
+				<tr>
+					<td><img src="images/usd.jpg" class="currency"/> USD</td>
+					<td><input type="text" id="usd_royal_usd" value="9.99"></td>
+					<td><img src="images/royal.jpg" class="currency"/> Royal Crystals</td>
+					<td><input type="text" id="usd_royal_royal" value="1000"></td>
+					<td>
+						This should be based on whatever shop rate you pick.
+						<ol>
+							<li>$9.99 is 1,000 Royal Crystals</li>
+							<li>$19.99 is 2,220 Royal Crystals</li>
+							<li>$49.99 is 5,750 Royal Crystals</li>
+							<li>$99.99 is 12,000 Royal Crystals</li>
+						</ol>
+					</td>
+				</tr>
+				<tr>
+					<td><img src="images/royal.jpg" class="currency"/> Royal Crystals</td>
+					<td><input type="text" id="royal_gold_royal" value="238"></td>
+					<td><img src="images/gold.jpg" class="currency"/> Gold</td>
+					<td><input type="text" id="royal_gold_gold" value="175"></td>
+					<td>
+						Royal crystals to gold is based on market rates on each server.<br/>
+						<img src="images/gold_to_royal.png" style="width: 150px;"/>
+					</td>
+				</tr>
+				<tr>
+					<td><img src="images/gold.jpg" class="currency"/> Gold</td>
+					<td><input type="text" id="gold_blue_gold" value="175"></td>
+					<td><img src="images/blue.jpg" class="currency"/> Blue Crystals</td>
+					<td><input type="text" id="gold_blue_blue" value="95"></td>
+					<td>
+						Gold to blue crystals is based on market rates on each server.<br/>
+						<img src="images/gold_to_blue.png" style="width: 300px;"/>
+					</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<br/>
+	<div>
+		<h1>1 currency to all others</h1>
+		<table class="output">
+			<thead>
+				<tr>
+					<th>From currency</th>
+					<th>Amount</th>
+					<th>Gold</th>
+					<th>Blue Crystals</th>
+					<th>Royal Crystals</th>
+					<th>USD</th>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>
+						<select id="onetomany_currency">
+							<option value="usd">USD</option>
+							<option value="gold">Gold</option>
+							<option value="blue">Blue Crystals</option>
+							<option value="royal">Royal Crystals</option>
+						</select>
+					</td>
+					<td>
+						<input type="text" id="onetomany_amt" value="1">
+					</td>
+					<td><span id="onetomany_gold"></span><img src="images/gold.jpg" class="currency"/></td>
+					<td><span id="onetomany_blue"></span><img src="images/blue.jpg" class="currency"/></td>
+					<td><span id="onetomany_royal"></span><img src="images/royal.jpg" class="currency"/></td>
+					<td><span id="onetomany_usd"></span><img src="images/usd.jpg" class="currency"/></td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<div>
+		<h1>Converter and Outputs</h1>
+		<table class="output">
+			<thead>
+				<tr>
+					<th>From Currency</th>
+					<th>Amount</th>
+					<th>To Currency</th>
+					<th>Amount</th>
+					<th>Comment</th>
+				</tr>
+			</thead>
+			<tbody id="computed_table">
+				<tr>
+					<td><img src="images/royal.jpg" class="currency"/> Royal Crystals</td>
+					<td><input type="text" value="238" id="royal_to_gold_to_blue"></td>
+					<td><img src="images/blue.jpg" class="currency"/> To Gold, <br/>then Blue</td>
+					<td id="royal_to_gold_to_blue_computed"></td>
+					<td>This may seem silly, but it's assurance that buying blue crystals directly in the shop is a better deal. Efficient markets etc etc.</td>
+				</tr>
+				<tr>
+					<td><img src="images/blue.jpg" class="currency"/> Blue Crystals</td>
+					<td><input type="text" value="100" id="blue_to_usd"></td>
+					<td><img src="images/usd.jpg" class="currency"/> USD</td>
+					<td id="blue_to_usd_computed"></td>
+					<td>This helps understand how much something in Mari's shop is really worth.</td>
+				</tr>
+				<tr>
+					<td><img src="images/gold.jpg" class="currency"/> Gold</td>
+					<td><input type="text" value="175" id="gold_to_usd"></td>
+					<td>from Royals from USD <img src="images/usd.jpg" class="currency"/> </td>
+					<td id="gold_to_usd_computed"></td>
+					<td>How much is gold worth in USD? Helps to understand real item value.</td>
+				</tr>
+			</tbody>
+		</table>
+	</div>
+	<!--
+Mari's Shop
+harmony leap stone (15) = 15 blue
+150 guardian fragment = 25 blue
+50 destruction frag = 20 blue
+500 harmony shards = 23 blue
+
+	-->
+</body>
+</html>
